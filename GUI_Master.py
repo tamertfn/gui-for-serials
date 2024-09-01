@@ -56,6 +56,8 @@ class ComGUI():
         # Put on the grid all the elements
         self.publish()
 
+        self.option_menus = []  # List to store all option menus
+
     def publish(self):
         '''
          Method to display all the Widget of the main frame
@@ -212,9 +214,21 @@ class ComGUI():
             thread = threading.Thread(target=self.serial.serial_conf, args=(self,), daemon=True)
             thread.start()
             self.btn_connect['text'] = "Disconnect"
+            self.freeze_options()  # Freeze options when connected
         else:
             self.serial.disconnect()
             self.btn_connect['text'] = "Connect"
+            self.unfreeze_options()  # Unfreeze options when disconnected
+
+    def freeze_options(self):
+        for menu in [self.drop_com, self.drop_baud, self.drop_bs, self.drop_par, self.drop_sb]:
+            menu.config(state="disabled")
+        self.entry_to.config(state="disabled")
+
+    def unfreeze_options(self):
+        for menu in [self.drop_com, self.drop_baud, self.drop_bs, self.drop_par, self.drop_sb]:
+            menu.config(state="normal")
+        self.entry_to.config(state="normal")
 
 if __name__ == "__main__":
     RootGUI()
