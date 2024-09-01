@@ -47,7 +47,7 @@ class ComGUI():
         self.btn_refresh = Button(self.frame, text="Refresh",
                                   width=10,  command=self.com_refresh)
         self.btn_connect = Button(self.frame, text="Connect",
-                                  width=10, state="disabled",  command=self.serial_connect)
+                                  width=10, state="disabled", command=self.toggle_connection)
 
         # Optional Graphic parameters
         self.padx = 20
@@ -181,7 +181,18 @@ class ComGUI():
         Mehtod to keep the connect button disabled if all the
         conditions are not cleared
         '''
-        if self.clicked_bd.get() == '-' or self.clicked_com.get() == '-' or self.clicked_bs.get() == '-' or self.clicked_par.get() == '-' or self.clicked_sb.get() == '-' or self.is_valid(self.entry_to.get()):
+        # Check if any dropdown is not selected or if the timeout entry is invalid
+        dropdowns_not_selected = [
+            self.clicked_bd.get() == '-',
+            self.clicked_com.get() == '-',
+            self.clicked_bs.get() == '-',
+            self.clicked_par.get() == '-',
+            self.clicked_sb.get() == '-'
+        ]
+        
+        timeout_invalid = self.is_valid(self.entry_to.get())
+        
+        if any(dropdowns_not_selected) or timeout_invalid:
             self.btn_connect["state"] = "disabled"
         else:
             self.btn_connect["state"] = "active"
@@ -196,9 +207,14 @@ class ComGUI():
     def com_refresh(self):
         print("Refresh")
 
-    def serial_connect(self):
-        thread = threading.Thread(target=self.serial.serial_conf, args=(self,), daemon=True)
-        thread.start()
+    def toggle_connection(self):
+        if not self.serial.is_connected:
+            thread = threading.Thread(target=self.serial.serial_conf, args=(self,), daemon=True)
+            thread.start()
+            self.btn_connect['text'] = "Disconnect"
+        else:
+            self.serial.disconnect()
+            self.btn_connect['text'] = "Connect"
 
 if __name__ == "__main__":
     RootGUI()
