@@ -1,6 +1,12 @@
+import tkinter as tk
 from tkinter import *
+from tkinter import Button, Frame
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import json
 import threading
-
+import time
+import matplotlib.pyplot as plt
 
 class RootGUI():
     def __init__(self):
@@ -9,7 +15,6 @@ class RootGUI():
         self.root.title("Serial communication")
         self.root.geometry("500x500")
         self.root.config(bg="white")
-
 
 # Class to setup and create the communication manager with MCU
 class ComGUI():
@@ -86,13 +91,13 @@ class ComGUI():
          Method to Get the available COMs connected to the PC
          and list them into the drop menu
         '''
-        #Generate the list of available coms
+        # Generate the list of available coms
         coms = ["-"]
         for port in self.serial.ports:
             coms.append(port.name)
         
         self.clicked_com = StringVar()
-        self.clicked_com.set(coms[0])
+        self.clicked_com.set(coms[-1])
         self.drop_com = OptionMenu(
             self.frame, self.clicked_com, *coms, command=self.connect_ctrl)
         self.drop_com.config(width=10)
@@ -116,7 +121,7 @@ class ComGUI():
                "56000",
                "57600",
                "115200"]
-        self.clicked_bd.set(bds[0])
+        self.clicked_bd.set(bds[-1])
         self.drop_baud = OptionMenu(
             self.frame, self.clicked_bd, *bds, command=self.connect_ctrl)
         self.drop_baud.config(width=10)
@@ -132,14 +137,14 @@ class ComGUI():
                "7",
                "8",
                "9",]
-        self.clicked_bs.set(bss[0])
+        self.clicked_bs.set(bss[-2])
         self.drop_bs = OptionMenu(
             self.frame, self.clicked_bs, *bss, command=self.connect_ctrl)
         self.drop_bs.config(width=10)
         
     def parOptionMenu(self):
         '''
-         Method to list all the parityu in a drop menu
+         Method to list all the parity in a drop menu
         '''
         self.clicked_par = StringVar()
         pars = ["-",
@@ -148,7 +153,7 @@ class ComGUI():
                "Odd",
                "Mark",
                "Space",]
-        self.clicked_par.set(pars[0])
+        self.clicked_par.set(pars[1])
         self.drop_par = OptionMenu(
             self.frame, self.clicked_par, *pars, command=self.connect_ctrl)
         self.drop_par.config(width=10)
@@ -162,7 +167,7 @@ class ComGUI():
                "1",
                "1.5",
                "2",]
-        self.clicked_sb.set(sbs[0])
+        self.clicked_sb.set(sbs[1])
         self.drop_sb = OptionMenu(
             self.frame, self.clicked_sb, *sbs, command=self.connect_ctrl)
         self.drop_sb.config(width=10)
@@ -180,7 +185,7 @@ class ComGUI():
 
     def connect_ctrl(self, widget, *args):
         '''
-        Mehtod to keep the connect button disabled if all the
+        Method to keep the connect button disabled if all the
         conditions are not cleared
         '''
         # Check if any dropdown is not selected or if the timeout entry is invalid
@@ -208,12 +213,16 @@ class ComGUI():
 
     def com_refresh(self):
         print("Refresh")
+        self.unfreeze_options()
 
     def toggle_connection(self):
         if not self.serial.is_connected:
             thread = threading.Thread(target=self.serial.serial_conf, args=(self,), daemon=True)
             thread.start()
+            print(f"THREAD NUMARA: {thread.name}")
             self.btn_connect['text'] = "Disconnect"
+            thread2 = threading.Thread(target=self.initialize_DispGUI, args=(self.root,self.serial, ), daemon=True)
+            thread2.start()
             self.freeze_options()  # Freeze options when connected
         else:
             self.serial.disconnect()
@@ -229,7 +238,128 @@ class ComGUI():
         for menu in [self.drop_com, self.drop_baud, self.drop_bs, self.drop_par, self.drop_sb]:
             menu.config(state="normal")
         self.entry_to.config(state="normal")
+    
+    def initialize_DispGUI(self, root, serial):
+        Dispgui = DispGUI(root, serial)
+
+class DispGUI():
+    def __init__(self, root, serial):
+        '''
+        Initialize main Widgets for communication GUI
+        '''
+        self.root = root
+        self.serial = serial
+        self.chart_frame = None
+        self.chart_canvas = None
+        self.ax = None
+        self.running = False
+
+        # Build ConnGui Static Elements
+        self.frame = tk.LabelFrame(root, text="Display Manager",
+                                padx=5, pady=5, bg="white", width=60)
+        self.DispGUIOpen()
+
+    def DispGUIOpen(self):
+        '''
+        Method to display all the widgets 
+        '''
+        self.root.geometry("800x800")
+        self.frame.grid(row=8, column=0, rowspan=3, columnspan=5, padx=5, pady=5)
+
+        # Buttons for chart control
+        self.btn_start_stream = Button(self.frame, text="Start Stream", command=self.start_stream)
+        self.btn_start_stream.grid(column=0, row=8, padx=5, pady=5)
+
+        self.btn_stop_stream = Button(self.frame, text="Stop Stream", command=self.stop_stream)
+        self.btn_stop_stream.grid(column=1, row=8, padx=5, pady=5)
+
+        self.btn_new_chart = Button(self.frame, text="New Chart", command=self.new_chart)
+        self.btn_new_chart.grid(column=2, row=8, padx=5, pady=5)
+
+        self.btn_kill_chart = Button(self.frame, text="Kill Chart", command=self.kill_chart)
+        self.btn_kill_chart.grid(column=3, row=8, padx=5, pady=5)
+
+        self.btn_save_data = Button(self.frame, text="Save Data", command=self.save_data)
+        self.btn_save_data.grid(column=4, row=8, padx=5, pady=5)
+
+    def DispGUIClose(self):
+        '''
+        Method to close the connection GUI and destroy the widgets
+        '''
+        # Must destroy all the elements so they are not kept in memory
+        for widget in self.frame.winfo_children():
+            widget.destroy()
+        self.frame.destroy()
+        self.root.geometry("500x500")
+
+    def start_stream(self):
+        if self.chart_canvas is not None:
+            self.running = True
+            self.update_chart()
+
+    def stop_stream(self):
+        self.running = False
+
+    def new_chart(self):
+        if self.chart_frame is None:
+            self.chart_frame = Frame(self.frame)
+            self.chart_frame.grid(row=10, column=0, columnspan=5)
+
+            fig, self.ax = plt.subplots()
+            self.chart_canvas = FigureCanvasTkAgg(fig, master=self.chart_frame)
+            self.chart_canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+            self.ax.set_title('Real-Time Data')
+            self.ax.set_xlabel('Time')
+            self.ax.set_ylabel('Value')
+
+            self.chart_canvas.draw()
+
+    def update_chart(self):
+        def read_json_data():
+            try:
+                with open("received_data.json", "r") as file:
+                    data = json.load(file)
+                    return data
+            except (json.JSONDecodeError, FileNotFoundError) as e:
+                print(f"JSON okuma hatası: {e}")
+                return {"T1": [], "T2": []}  # Varsayılan boş veri
+
+        def animate():
+            while self.running:
+                data = read_json_data()
+
+                if data:
+                    T1_data = data.get("T1", [])[-50:]  # Get the last 50 data points
+                    T2_data = data.get("T2", [])[-50:]
+                    time_data = list(range(len(T1_data)))  # Time data is index-based
+
+                    self.ax.clear()
+                    self.ax.plot(time_data, T1_data, label="T1", marker='o')
+                    self.ax.plot(time_data, T2_data, label="T2", marker='o')
+                    self.ax.set_title('Real-Time Data')
+                    self.ax.set_xlabel('Time')
+                    self.ax.set_ylabel('Value')
+                    self.ax.legend()
+
+                    self.chart_canvas.draw()
+
+                time.sleep(1)  # Update interval in seconds
+
+        threading.Thread(target=animate, daemon=True).start()
+
+
+    def kill_chart(self):
+        if self.chart_frame is not None:
+            self.chart_frame.destroy()
+            self.chart_frame = None
+            self.chart_canvas = None
+
+    def save_data(self):
+        # Implement the save data functionality
+        pass
 
 if __name__ == "__main__":
     RootGUI()
     ComGUI()
+    DispGUI()
