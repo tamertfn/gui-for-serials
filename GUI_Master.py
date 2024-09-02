@@ -1,6 +1,10 @@
+# This file contains the main GUI classes for the Serial Communication GUI application.
+# It includes RootGUI, ComGUI, and DispGUI classes which manage different aspects of the user interface.
+
 from tkinter import *
 import threading
 
+# RootGUI class: Initializes the main application window.
 class RootGUI():
     def __init__(self):
         '''Initializing the root GUI and other comps of the program'''
@@ -9,7 +13,9 @@ class RootGUI():
         self.root.geometry("500x500")
         self.root.config(bg="white")
 
-# Class to setup and create the communication manager with MCU
+# ComGUI class: Manages the communication settings and interface.
+# It includes dropdown menus for selecting communication parameters,
+# Connect/Disconnect button, and Refresh button for updating available COM ports.
 class ComGUI():
     def __init__(self, root, serial, display_ctrl):
         '''
@@ -259,6 +265,8 @@ class ComGUI():
             self.dispgui = DispGUI(self.root, self.serial, self.display_ctrl)
             self.root.after(0, self.dispgui.publish)
 
+# DispGUI class: Handles the display management interface.
+# It includes Start/Stop stream buttons, New Chart/Kill Chart buttons, and Save Data button.
 class DispGUI():
     def __init__(self, root, serial, display_ctrl):
         '''

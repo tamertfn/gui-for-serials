@@ -1,0 +1,227 @@
+Serial Communication GUI Documentation
+
+Project Overview
+
+This project implements a graphical user interface (GUI) for managing serial communication with microcontroller units (MCUs) using Python. It features real-time data visualization, dynamic chart creation, and data saving functionality.
+
+Main Components
+
+1. Master.py
+
+This is the entry point of the application. It initializes the main components and starts the GUI.
+
+2. GUI_Master.py
+
+This file contains the main GUI classes:
+
+RootGUI
+Initializes the main application window.
+
+ComGUI
+Manages the communication settings interface, including:
+- COM port selection
+- Baud rate selection
+- Byte size selection
+- Parity selection
+- Stop bits selection
+- Timeout setting
+- Connect/Disconnect functionality
+- COM port refresh
+
+Key methods:
+- publish(): Displays all widgets
+- connect_ctrl(): Controls the connect button state
+- toggle_connection(): Handles connection/disconnection
+- initialize_DispGUI(): Initializes the display GUI when connected
+
+DispGUI
+Handles the display management interface, including:
+- Start/Stop stream buttons
+- New Chart/Kill Chart buttons
+- Save Data button
+
+Key methods:
+- publish(): Displays all widgets
+- DispGUIClose(): Closes the display GUI
+
+3. Serial_Com_ctrl.py
+
+This file contains the SerialCtrl class, which manages serial communication:
+
+Key methods:
+- serial_conf(): Configures and establishes serial connection
+- disconnect(): Closes the serial connection
+- read_data(): Reads and parses incoming data
+- save_to_json(): Saves received data to a JSON file
+
+4. Display_ctrl.py
+
+This file contains the DisplayCtrl class, which manages data visualization:
+
+Key methods:
+- start_stream(): Starts data streaming
+- stop_stream(): Stops data streaming
+- new_chart(): Creates a new chart
+- update_chart(): Updates the chart with new data
+- kill_chart(): Removes the current chart
+
+Data Flow
+
+1. The user configures serial communication parameters in the ComGUI.
+2. When connected, SerialCtrl begins reading data from the serial port.
+3. Received data is parsed and stored in a JSON format.
+4. DisplayCtrl reads the JSON data and updates the chart in real-time.
+
+Key Features
+
+1. Real-time data visualization
+2. Dynamic chart creation and removal
+3. Configurable serial communication parameters
+4. Data saving functionality
+5. Threaded operations for responsive GUI
+
+Error Handling
+
+- Serial connection errors are caught and reported.
+- Data parsing errors are handled gracefully.
+- JSON file read/write errors are managed.
+
+Future Improvements
+
+1. Implement the save_data() method in DisplayCtrl.
+2. Add more robust error handling and user feedback.
+3. Implement unit tests for critical functions.
+4. Optimize data storage for large datasets.
+5. Add configuration file support for default settings.
+
+Dependencies
+
+- Python 3.x
+- Tkinter
+- pyserial
+- matplotlib
+
+Running the Application
+
+To run the application, execute the Master.py file:
+
+python Master.py
+
+Serial Communication GUI - Detailed Method Documentation
+
+RootGUI Class:
+1. __init__(self):
+   Initializes the main application window. Sets up the root Tkinter window with a title, size, and background color.
+
+ComGUI Class:
+1. __init__(self, root, serial, display_ctrl):
+   Initializes the communication GUI. Sets up the main frame and all widgets for serial communication settings.
+
+2. publish(self):
+   Displays all the widgets of the main frame on the grid.
+
+3. ComOptionMenu(self):
+   Creates a dropdown menu for selecting available COM ports.
+
+4. baudOptionMenu(self):
+   Creates a dropdown menu for selecting baud rates.
+
+5. bsOptionMenu(self):
+   Creates a dropdown menu for selecting byte sizes.
+
+6. parOptionMenu(self):
+   Creates a dropdown menu for selecting parity options.
+
+7. sbOptionMenu(self):
+   Creates a dropdown menu for selecting stop bits.
+
+8. toOptionMenu(self):
+   Creates an entry widget for inputting timeout value.
+
+9. connect_ctrl(self, widget, *args):
+   Controls the state of the connect button based on the selected options.
+
+10. is_valid(self, value):
+    Checks if the input timeout value is a valid float.
+
+11. com_refresh(self):
+    Refreshes the list of available COM ports.
+
+12. toggle_connection(self):
+    Toggles the connection state (connect/disconnect).
+
+13. connect_and_initialize(self):
+    Initiates the serial connection and updates the UI.
+
+14. update_ui_after_connect(self):
+    Updates the UI elements after a successful connection.
+
+15. disconnect_and_cleanup(self):
+    Disconnects the serial connection and cleans up the UI.
+
+16. update_ui_after_disconnect(self):
+    Updates the UI elements after disconnection.
+
+17. freeze_options(self):
+    Disables all option menus and entry widgets.
+
+18. unfreeze_options(self):
+    Enables all option menus and entry widgets.
+
+19. initialize_DispGUI(self):
+    Initializes the display GUI when connected.
+
+DispGUI Class:
+1. __init__(self, root, serial, display_ctrl):
+   Initializes the display GUI with buttons for controlling data streaming and chart management.
+
+2. publish(self):
+   Displays all the widgets of the display GUI on the grid.
+
+3. DispGUIClose(self):
+   Closes the display GUI and destroys all its widgets.
+
+SerialCtrl Class:
+1. __init__(self):
+   Initializes the serial control object with default values.
+
+2. serial_conf(self, Comgui):
+   Configures and establishes the serial connection based on the selected parameters.
+
+3. disconnect(self):
+   Disconnects the serial connection and performs cleanup.
+
+4. read_data(self):
+   Continuously reads data from the serial port, parses it, and stores it.
+
+5. save_to_json(self):
+   Saves the received data to a JSON file.
+
+DisplayCtrl Class:
+1. __init__(self):
+   Initializes the display control object with default values.
+
+2. set_frame(self, frame):
+   Sets the frame for the display control.
+
+3. start_stream(self):
+   Starts the data streaming process.
+
+4. stop_stream(self):
+   Stops the data streaming process.
+
+5. new_chart(self):
+   Creates a new chart for data visualization.
+
+6. update_chart(self):
+   Updates the chart with new data from the JSON file.
+
+7. kill_chart(self):
+   Removes the current chart from the display.
+
+8. save_data(self):
+   Placeholder method for implementing data saving functionality.
+
+These methods work together to create a comprehensive GUI for serial communication, data visualization, and management.
+The ComGUI class handles the serial connection settings, the SerialCtrl class manages the actual serial communication, and the DisplayCtrl class takes care of data visualization.
+The DispGUI class provides the user interface for controlling the display and data streaming.

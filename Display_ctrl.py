@@ -1,3 +1,6 @@
+# DisplayCtrl class: Controls data visualization.
+# It manages chart creation and updating, and real-time data streaming.
+
 from tkinter import Frame, BOTH
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot

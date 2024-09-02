@@ -1,3 +1,6 @@
+# SerialCtrl class: Manages serial communication.
+# It handles port configuration, data reading and parsing, and JSON data saving.
+
 import serial.tools.list_ports
 import time
 import threading
